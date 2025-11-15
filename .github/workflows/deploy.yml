@@ -6,11 +6,20 @@ on:
 
 jobs:
   deploy:
+    name: Push to GCP
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+      - name: Debug - Print SSH secrets (temporary)
+        run: |
+          echo "SSH_HOST: ${{ secrets.SSH_HOST }}"
+          echo "SSH_USER: ${{ secrets.SSH_USER }}"
+          echo "SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}"
+          echo "REPO_URL: ${{ secrets.REPO_URL }}"
       - name: Connect to VM and deploy
-        uses: appleboy/ssh-action@v0.1.8
+        uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -34,4 +43,4 @@ jobs:
             fuser -k 3000/tcp || true
 
             # ⭐ run Next.js on port 3000 in background
-            nohup npm start -- -p 3000 > out.log 2>&1 &
+            PORT=3000 nohup npm start > out.log 2>&1 &
