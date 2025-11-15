@@ -1,0 +1,42 @@
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Connect to VM and deploy
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            # go to app directory (create if not exists)
+            mkdir -p ~/myapp
+            cd ~/myapp
+
+            # if repo does not exist, clone. If exists, pull updates.
+            if [ ! -d ".git" ]; then
+              git clone ${{ secrets.REPO_URL }} .
+            else
+              git pull origin main
+            fi
+
+            # install deps
+            npm install --force
+
+            # build next.js
+            npm run build
+
+            # kill any existing process on port 3000
+            fuser -k 3000/tcp || true
+
+            # start next.js in background
+            npm run start
