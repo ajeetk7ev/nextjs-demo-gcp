@@ -18,25 +18,20 @@ jobs:
           script: |
             set -e
 
-            # go to app directory (create if not exists)
             mkdir -p ~/myapp
             cd ~/myapp
 
-            # if repo does not exist, clone. If exists, pull updates.
             if [ ! -d ".git" ]; then
               git clone ${{ secrets.REPO_URL }} .
             else
               git pull origin main
             fi
 
-            # install deps
             npm install --force
-
-            # build next.js
             npm run build
 
-            # kill any existing process on port 3000
+            # kill previous next.js process if running
             fuser -k 3000/tcp || true
 
-            # start next.js in background
-            npm run start
+            # ⭐ run Next.js on port 3000 in background
+            nohup npm start -- -p 3000 > out.log 2>&1 &
